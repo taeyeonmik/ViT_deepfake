@@ -1,0 +1,23 @@
+training:
+  lr: 0.001
+  weight-decay: 0.0000001
+  bs: 32
+  scheduler: 'steplr'
+  gamma: 0.1
+  step-size: 15
+  rebalancing_fake: 0.3
+  rebalancing_real: 1
+  frames-per-video: 30 # Equidistant frames
+
+model:
+  image-size: 224
+  patch-size: 7 # Each chunk is 7 x 7 pixels
+  num-classes: 1
+  dim: 1024 # d_model
+  depth: 6 # The encoder is composed of a stack of N = 6 identical layers
+  dim-head: 64
+  heads: 8 # Number of heads in Multi Self-Attention
+  mlp-dim: 2048
+  emb-dim: 32
+  dropout: 0.15
+  emb-dropout: 0.15
