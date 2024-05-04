@@ -17,7 +17,7 @@ model:
   depth: 6 # The encoder is composed of a stack of N = 6 identical layers
   dim-head: 64
   heads: 8 # Number of heads in Multi Self-Attention
-  mlp-dim: 2048
+  mlp-dim: 2048 # Dimension for mlp
   emb-dim: 32
   dropout: 0.15
   emb-dropout: 0.15
