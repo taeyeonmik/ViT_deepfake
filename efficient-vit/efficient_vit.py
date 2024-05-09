@@ -82,7 +82,7 @@ class MSA(nn.Module):
 # Vision Transformer
 class Transformer(nn.Module):
     def __init__(self, dim, depth, heads, dim_head, mlp_dim, dropout = 0.):
-        super.__init__()
+        super().__init__()
         self.layers = nn.ModuleList([])
 
         # The encoder is composed of a stack of N(depth) = 6 identical layers
@@ -100,94 +100,110 @@ class Transformer(nn.Module):
 
 # Efficient Net (pretrained)
 class EfficientNet_(nn.Module):
-    def __init__(self, name='efficientnet-b0'):
-        super.__init__()
+    def __init__(self, name='efficientnet-b0', vit=True):
+        super().__init__()
         """ Pretrained efficientnet-b0 
             the smallest of the EfficientNet networks, 
             as a convolutional extractor for processing the input faces.
         """
         self.efficient_net = EfficientNet.from_pretrained(name)
+        if not vit:
+            # change the classifier
+            self.efficient_net._fc = torch.nn.Linear(in_features=self.efficient_net._fc.in_features,
+                                                     out_features=1,
+                                                     bias=True)
         for i in range(0, len(self.efficient_net._blocks)):
             for index, param in enumerate(self.efficient_net._blocks[i].parameters()):
                 if i >= len(self.efficient_net._blocks) - 3:
                     param.requires_grad = True
+                    print("eff finetune True")
                 else:
                     param.requires_grad = False
+    def model(self):
         return self.efficient_net
 
 # Efficient Net + ViT
 class EfficientViT(nn.Module):
-    def __init__(self, config, channels=512, selected_efficient_net=0):
-        super.__init__()
+    def __init__(self, config, channels=512, selected_efficient_net=0, effnet=True, vit=True):
+        super().__init__()
+        self.vit = vit
+        self.effnet = effnet
 
-        image_size = config['model']['image-size'] # 224
-        patch_size = config['model']['patch-size'] # 7
-        num_classes = config['model']['num-classes'] # 1
-        dim = config['model']['dim'] # 1024
-        depth = config['model']['depth'] # 6
-        heads = config['model']['heads'] # 8
-        mlp_dim = config['model']['mlp-dim'] # 2048
-        emb_dim = config['model']['emb-dim'] # 32
-        dim_head = config['model']['dim-head'] # 64
-        dropout = config['model']['dropout'] # 0.15
-        emb_dropout = config['model']['emb-dropout'] # 0.15
+        if effnet:
+            self.efficient_net = EfficientNet_(name=f'efficientnet-b{str(selected_efficient_net)}', vit=self.vit).model()
+            print("Efficientnet-b" + str(selected_efficient_net) + " will be using.")
+        if vit:
+            image_size = config['model']['image-size'] # 224
+            patch_size = config['model']['patch-size'] # 7
+            num_classes = config['model']['num-classes'] # 1
+            dim = config['model']['dim'] # 1024
+            depth = config['model']['depth'] # 6
+            heads = config['model']['heads'] # 8
+            mlp_dim = config['model']['mlp-dim'] # 2048
+            emb_dim = config['model']['emb-dim'] # 32
+            dim_head = config['model']['dim-head'] # 64
+            dropout = config['model']['dropout'] # 0.15
+            emb_dropout = config['model']['emb-dropout'] # 0.15
 
-        assert image_size % patch_size == 0, 'image dimensions must be divisible by the patch size'
+            assert image_size % patch_size == 0, 'image dimensions must be divisible by the patch size'
 
-        self.efficient_net = EfficientNet_(name='efficientnet-b0')
+            num_patches = (7 // patch_size) ** 2
+            """ (page 3 => https://arxiv.org/pdf/2010.11929.pdf) 
+                reshape the image x (H, W, C) 
+                into a sequence of flattened 2D patches x_p (N, (P P) C),
+                where (H, W) is the resolution of the original image, 
+                C is the number of channels, 
+                (P, P) is the resolution of each image patch, 
+                and N = HW/(P**2) is the resulting number of patches.
+                
+                The Transformer uses constant latent vector size D through all of its layers, 
+                so we flatten the patches and map to D dimensions with a trainable linear projection (Eq. 1). 
+                We refer to the output of this projection as the patch embeddings.
+                (Eq. 1) E = (P * P * C) * D, E_pos = (N + 1) * D
+            """
+            patch_dim = channels * patch_size ** 2
 
-        num_patches = (7 // patch_size) ** 2
-        """ (page 3 => https://arxiv.org/pdf/2010.11929.pdf) 
-            reshape the image x (H, W, C) 
-            into a sequence of flattened 2D patches x_p (N, (P P) C),
-            where (H, W) is the resolution of the original image, 
-            C is the number of channels, 
-            (P, P) is the resolution of each image patch, 
-            and N = HW/(P**2) is the resulting number of patches.
-            
-            The Transformer uses constant latent vector size D through all of its layers, 
-            so we flatten the patches and map to D dimensions with a trainable linear projection (Eq. 1). 
-            We refer to the output of this projection as the patch embeddings.
-            (Eq. 1) E = (P * P * C) * D, E_pos = (N + 1) * D
-        """
-        patch_dim = channels * patch_size ** 2
+            self.patch_size = patch_size # 7
+            self.pos_embedding = nn.Parameter(torch.randn(emb_dim, 1, dim)) # ->
+            self.patch_to_embedding = nn.Linear(patch_dim, dim) # -> (P * P * C) * D
+            self.cls_token = nn.Parameter(torch.randn(1, 1, dim)) # -> (1, 1, 1024)
+            self.dropout = nn.Dropout(emb_dropout) # -> 0.15
+            """
+                depth : 6 (encoder stacks)
+                heads : 8 (nb of heads in MSA)
+                dim_head : 
+                mlp_dim : 2048
+                dropout : 0.15
+            """
+            self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
 
-        self.patch_size = patch_size # 7
-        self.pos_embedding = nn.Parameter(torch.randn(emb_dim, 1, dim)) # ->
-        self.patch_to_embedding = nn.Linear(patch_dim, dim) # -> (P * P * C) * D
-        self.cls_token = nn.Parameter(torch.randn(1, 1, dim)) # -> (1, 1, 1024)
-        self.dropout = nn.Dropout(emb_dropout) # -> 0.15
-        """
-            depth : 6 (encoder stacks)
-            heads : 8 (nb of heads in MSA)
-            dim_head : 
-            mlp_dim : 2048
-            dropout : 0.15
-        """
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
+            self.to_cls_token = nn.Identity()
 
-        self.to_cls_token = nn.Identity()
+            # MLP head for classification
+            self.mlp_head = nn.Sequential(
+                nn.Linear(dim, mlp_dim),
+                nn.ReLU(),
+                nn.Linear(mlp_dim, num_classes)
+            )
+            print("Vision Transformer will be using.")
 
-        # MLP head for classification
-        self.mlp_head = nn.Sequential(
-            nn.Linear(dim, mlp_dim),
-            nn.ReLU(),
-            nn.Linear(mlp_dim, num_classes)
-        )
+    def forward(self, x, mask=None):
+        if self.vit:
+            if self.effnet:
+                x = self.efficient_net.extract_features(x)
+            p = self.patch_size
 
-    def forward(self, img, mask=None):
-        x = self.efficient_net.extract_feature(img)
-        p = self.patch_size
+            x_flat2D = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
+            x_proj = self.patch_to_embedding(x_flat2D)
 
-        x_flat2D = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
-        x_proj = self.patch_to_embedding(x_flat2D)
-
-        cls_token = self.cls_token.expand(x.shape[0], -1, -1)
-        x = torch.cat((cls_token, x_proj), 1)
-        shape = x.shape[0]
-        x += self.pos_embedding[0:shape]
-        x = self.dropout(x)
-        x = self.transformer(x)
-        x = self.to_cls_token(x[:, 0])
-        x = self.mlp_head(x)
+            cls_token = self.cls_token.expand(x.shape[0], -1, -1)
+            x = torch.cat((cls_token, x_proj), 1)
+            shape = x.shape[0]
+            x += self.pos_embedding[0:shape]
+            x = self.dropout(x)
+            x = self.transformer(x)
+            x = self.to_cls_token(x[:, 0])
+            x = self.mlp_head(x)
+        else:
+            x = self.efficient_net(x)
         return x
