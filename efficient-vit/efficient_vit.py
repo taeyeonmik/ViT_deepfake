@@ -66,10 +66,6 @@ class MSA(nn.Module):
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = h), qkv)
 
         # Matmul(Q, K.T) + scaling
-        """
-            einsum :
-            rearrange :
-        """
         dots = einsum('b h i d, b h j d -> b h i j', q, k) * self.scale
         # Softmax
         attn = self.attend(dots)

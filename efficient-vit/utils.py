@@ -8,15 +8,6 @@ import torch
 from statistics import mean
 
 
-# def transform_frame(image, image_size):
-#     transform_pipeline = Compose([
-#         IsotropicResize(max_side=image_size, interpolation_down=cv2.INTER_LINEAR, interpolation_up=cv2.INTER_LINEAR),
-#         PadIfNeeded(min_height=image_size, min_width=image_size, border_mode=cv2.BORDER_REPLICATE)
-#     ]
-#     )
-#     return transform_pipeline(image=image)['image']
-
-
 def resize(image, image_size):
     try:
         return cv2.resize(image, dsize=(image_size, image_size))
@@ -113,3 +104,18 @@ def check_correct(preds, labels):
         elif (pred == 0) and (labels[i] == 1): fn += 1
 
     return correct, positive_class, negative_class, (tp, fp, tn, fn)
+
+def getDataset(dataSrcPath:str) -> tuple :
+    tr = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
+    vl = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
+    ts = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
+
+    for k in tr.keys():
+        try:
+          # images
+          tr[k] = [os.path.join(dataSrcPath, k, 'train', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'train'))]
+          vl[k] = [os.path.join(dataSrcPath, k, 'validation', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'validation'))]
+          ts[k] = [os.path.join(dataSrcPath, k, 'test', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'test'))]
+        except:
+          print(f"data {k} does not exist")
+    return tr, vl, ts

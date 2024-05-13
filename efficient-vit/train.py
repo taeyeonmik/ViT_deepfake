@@ -12,27 +12,13 @@ from torch.optim import lr_scheduler
 
 from dataset import DeepFakesDataset
 from efficient_vit import EfficientViT
-from utils import get_method, check_correct, resize, shuffle_dataset, create_label, get_n_params
+from utils import getDataset, check_correct, shuffle_dataset, create_label, get_n_params
 
-def getDataset(dataSrcPath:str) -> tuple :
-    tr = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
-    vl = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
-    ts = {'ffhq':None, 'stylegan_ffhq':None, 'stylegan_celeba':None}
-
-    for k in tr.keys():
-        try:
-          # images
-          tr[k] = [os.path.join(dataSrcPath, k, 'train', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'train'))]
-          vl[k] = [os.path.join(dataSrcPath, k, 'validation', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'validation'))]
-          ts[k] = [os.path.join(dataSrcPath, k, 'test', img) for img in os.listdir(os.path.join(dataSrcPath, k, 'test'))]
-        except:
-          print(f"data {k} does not exist")
-    return tr, vl, ts
 
 if __name__ == "__main__":
     # args
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_epochs', default=10, type=int,
+    parser.add_argument('--num_epochs', default=30, type=int,
                         help='Number of training epochs.')
     parser.add_argument('--workers', default=8, type=int,
                         help='Number of data loader workers.') #10
@@ -40,18 +26,8 @@ if __name__ == "__main__":
                         help='Path to latest checkpoint (default: none).')
     parser.add_argument('--models', default='efficientvit', type=str, metavar='PATH',
                         help='Select a model architecture among [efficientvit, efficientnet, vit]')
-    # parser.add_argument('--models', default='./checkpoint', type=str, metavar='PATH',
-    #                     help='Path to checkpoints (default: none).')
     parser.add_argument('--datapath', type=str, default='./data/',
                         help="Path of image for training")
-    # parser.add_argument('--validpath', type=str, default='./testimage/',
-    #                     help="Path of image for validation")
-    # parser.add_argument('--testpath', type=str, default='./testimage/',
-    #                     help="Path of image for validation")
-    # parser.add_argument('--data', type=str, default='All',
-    #                     help="Which dataset to use (Deepfakes|Face2Face|FaceShifter|FaceSwap|NeuralTextures|All)")
-    # parser.add_argument('--max_videos', type=int, default=-1,
-    #                     help="Maximum number of videos to use for training (default: all).")
     parser.add_argument('--config', default='./efficient-vit/configs/configuration.yaml', type=str,
                         help="Which configuration to use. See into 'config' folder.")
     parser.add_argument('--efficient_net', type=int, default=0,
@@ -134,13 +110,9 @@ if __name__ == "__main__":
 
     print("Model Parameters:", get_n_params(model))
 
-    loss_fn = torch.nn.BCEWithLogitsLoss()
-    # loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([class_weights]))
+    loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([class_weights]))
 
     # Create the data loaders
-    # validation_labels = np.asarray([row[1] for row in validset])
-    # labels = np.asarray([row[1] for row in trainset])
-
     train_labels = trainset[1]
     trainset = DeepFakesDataset(trainset[0], trainset[1], config['model']['image-size'])
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=config['training']['bs'], shuffle=True, sampler=None,
@@ -159,7 +131,6 @@ if __name__ == "__main__":
                                          worker_init_fn=None, prefetch_factor=2,
                                          persistent_workers=False)
     del validset
-
 
     # train
     model = model.cuda()
@@ -193,7 +164,6 @@ if __name__ == "__main__":
 
             y_pred = model(images)
             y_pred = y_pred.cpu()
-            # print(y_pred, labels)
             loss = loss_fn(y_pred, labels.float())
 
             corrects, positive_class, negative_class, tpfptnfn = check_correct(y_pred, labels)
@@ -267,7 +237,7 @@ if __name__ == "__main__":
             not_improved_loss = 0
 
         previous_loss = total_val_loss
-        print("#" + str(t) + "/" + str(30) + " loss:" +
+        print("#" + str(t+1) + "/" + str(30) + " loss:" +
                   str(total_loss) + " accuracy:" + str(train_correct) + " val_loss:" + str(
                 total_val_loss) + " val_accuracy:" + str(val_correct) + " val_precision:" + str(val_precision) +
                 " val_recall:" + str(val_recall) + " val_f1:" + str(val_f1) + " val_0s:" + str(val_negative) + "/" + str(
