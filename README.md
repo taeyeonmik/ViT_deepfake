@@ -22,25 +22,25 @@ git clone https://github.com/taeyeonmik/ViT_deepfake
 cd ViT_deepfake
 pip install -r requirements.txt
 ```
+
+[Installation de Model State Dict](https://drive.google.com/drive/folders/1iqpvkxa0oxgub9URjgcH7Sco-TZzhiOP?usp=sharing)
+
 ## Dataset
 ### DFFD: Diverse Fake Face Dataset
 ffhq.zip / stylegan_ffhq.zip/ stylegan_celeba.zip. Consultez [On the Detection of Digital Face Manipulation](https://arxiv.org/abs/1910.01717) 
 
 ## Structure du Projet
-ViT_deepfake/
+votre-projet/
 ├── README.md
 ├── requirements.txt
-├── efficient-vit/
-│   ├── configs/
-│   │   ├── configuration.yaml
-│   ├── dataset.py
-│   ├── efficient_vit.py
-│   ├── test.py
-│   ├── train.py
-│   ├── utils.py
-├── efficientnet/
-│   ├── model.py
-│   ├── utils.py
+├── deepfake_detection/
+│   ├── __init__.py
+│   ├── efficientnet_model.py
+│   ├── vision_transformer_model.py
+│   ├── detection.py
+├── examples/
+│   ├── example_image.jpg
+│   ├── example_video.mp4
 
 ## Modèles Utilisés
 ### EfficientNet
