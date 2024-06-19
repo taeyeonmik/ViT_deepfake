@@ -6,10 +6,9 @@ Ce projet utilise une combinaison de modèles EfficientNet et Vision Transformer
 1. [Introduction](#introduction)
 2. [Installation](#installation)
 3. [Dataset]($dataset)
-4. [Structure du Projet](#structure-du-projet)
-5. [Modèles Utilisés](#modèles-utilisés)
-6. [Présentation](#presentation)
-7. [Résultats](#resultat)
+4. [Modèles Utilisés](#modèles-utilisés)
+5. [Présentation](#presentation)
+6. [Résultats](#resultat)
 
 ## Introduction
 La détection des deepfakes est un enjeu majeur de la sécurité numérique. Ce projet combine deux architectures de réseaux de neurones, EfficientNet et Vision Transformer, pour améliorer la précision et la robustesse de la détection de deepfakes.
@@ -29,22 +28,6 @@ pip install -r requirements.txt
 ### DFFD: Diverse Fake Face Dataset
 ffhq.zip / stylegan_ffhq.zip/ stylegan_celeba.zip. Consultez [On the Detection of Digital Face Manipulation](https://arxiv.org/abs/1910.01717) 
 
-## Structure du Projet
-ViT_deepfake/
-├── README.md
-├── requirements.txt
-├── efficient-vit/
-│   ├── configs/
-│   │   ├── configuration.yaml
-│   ├── dataset.py
-│   ├── efficient_vit.py
-│   ├── test.py
-│   ├── train.py
-│   ├── utils.py
-└── efficientnet/
-    ├── model.py
-    └── utils.py
-
 ## Modèles Utilisés
 ### EfficientNet
 EfficientNet est une famille de modèles de convolution neuronale qui optimisent la précision et l'efficacité des calculs. Pour plus d'informations, consultez [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](https://arxiv.org/abs/1905.11946).
@@ -56,6 +39,7 @@ Vision Transformer (ViT) utilise des mécanismes d'attention pour traiter des im
 Vous pouvez consulter `presentation.pdf` dans ce repo, si vous voulez savoir des détailles de ce projet.
 
 ## Résultats
+Tous les résultats sont disponible en forme de graphiques dans `train-results` et `inference`.
 ### AUC
 - EfficientNet-B0 (Baseline) = 0.880
 - EfficientNet-B0 + ViT = 0.981
