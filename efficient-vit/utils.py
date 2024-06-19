@@ -1,6 +1,3 @@
-import cv2
-from albumentations import Compose, PadIfNeeded
-# from transforms.albu import IsotropicResize
 import numpy as np
 import os
 import cv2
@@ -43,14 +40,6 @@ def get_method(video, data_path):
             selected_method = method
             break
     return selected_method
-
-
-#def shuffle_dataset(dataset):
-#     import random
-#     random.seed(4)
-#     random.shuffle(dataset[0])
-#     random.shuffle(dataset[1])
-#     return dataset
 
 def shuffle_dataset(dataset):
     import random

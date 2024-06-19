@@ -18,30 +18,24 @@ from utils import getDataset, check_correct, shuffle_dataset, create_label, get_
 if __name__ == "__main__":
     # args
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_epochs', default=30, type=int,
-                        help='Number of training epochs.')
-    parser.add_argument('--workers', default=8, type=int,
-                        help='Number of data loader workers.') #10
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                        help='Path to latest checkpoint (default: none).')
-    parser.add_argument('--models', default='efficientvit', type=str, metavar='PATH',
-                        help='Select a model architecture among [efficientvit, efficientnet, vit]')
-    parser.add_argument('--datapath', type=str, default='./data/',
-                        help="Path of image for training")
-    parser.add_argument('--config', default='./efficient-vit/configs/configuration.yaml', type=str,
-                        help="Which configuration to use. See into 'config' folder.")
-    parser.add_argument('--efficient_net', type=int, default=0,
-                        help="Which EfficientNet version to use (0 or 7, default: 0)")
-    parser.add_argument('--patience', type=int, default=5,
-                        help="How many epochs wait before stopping for validation loss not improving.")
+    parser.add_argument('--num_epochs', default=30, type=int, help='Number of training epochs.')
+    parser.add_argument('--workers', default=2, type=int, help='Number of data loader workers.') #10
+    parser.add_argument('--resume', default=None, type=str, metavar='PATH', help='Path to latest checkpoint (default: none).')
+    parser.add_argument('--models', default='efficientvit', type=str, metavar='PATH', help='Select a model architecture among [efficientvit, efficientnet]')
+    parser.add_argument('--datapath', type=str, default='/Users/taeyeon/PersonalProjects/ViT_deepfake/', help="Path of image for training")
+    parser.add_argument('--config', default='./efficient-vit/configs/configuration.yaml', type=str, help="Which configuration to use. See into 'config' folder.")
+    parser.add_argument('--efficient_net', type=int, default=0, help="Which EfficientNet version to use (0 or 7, default: 0)")
+    parser.add_argument('--patience', type=int, default=5, help="How many epochs wait before stopping for validation loss not improving.")
     opt = parser.parse_args()
     print(opt)
 
-    # dataset
-    DATAPATH = opt.datapath
     # VALIDPATH = opt.validpath
     with open(opt.config, 'r') as ymlfile:
         config = yaml.safe_load(ymlfile)
+
+    # dataset
+    DATAPATH = opt.datapath
+    print(DATAPATH)
     # trainset, validset, testset = get_data_pair(DATAPATH)
     tr, vl, ts = getDataset(DATAPATH)
     trainset = tr['ffhq'] + tr['stylegan_ffhq']
@@ -52,9 +46,9 @@ if __name__ == "__main__":
     validset = shuffle_dataset(validset)
     testset = shuffle_dataset(testset)
     # create labels
-    trlb = create_label(trainset, DFcheckStr='F_SyFQ')
-    vllb = create_label(validset, DFcheckStr='F_SyFQ')
-    tslb = create_label(testset, DFcheckStr='F_SyFQ')
+    trlb = create_label(trainset, DFcheckStr='F_Sy')
+    vllb = create_label(validset, DFcheckStr='F_Sy')
+    tslb = create_label(testset, DFcheckStr='F_Sy')
 
     trainset, validset, testset = (trainset, trlb), (validset, vllb), (testset, tslb)
 
@@ -80,7 +74,6 @@ if __name__ == "__main__":
     print(test_counters)
     print("___________________")
 
-
     # model
     if opt.efficient_net == 0:
         channels = 1280
@@ -91,29 +84,29 @@ if __name__ == "__main__":
         model = EfficientViT(config=config, channels=channels, selected_efficient_net=opt.efficient_net)
     elif opt.models == 'efficientnet':
         model = EfficientViT(config=config, channels=channels, selected_efficient_net=opt.efficient_net, vit=False)
-    elif opt.models == 'vit':
-        model = EfficientViT(config=config, channels=channels, selected_efficient_net=opt.efficient_net, effnet=False)
-    model.train()
+    else:
+        print("Model architecture not defined.")
+        exit()
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=config['training']['lr'],
-                                weight_decay=config['training']['weight-decay'])
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=config['training']['step-size'],
-                                    gamma=config['training']['gamma'])
+    model.train()
+    optimizer = torch.optim.SGD(model.parameters(), lr=config['training']['lr'], weight_decay=config['training']['weight-decay'])
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=config['training']['step-size'], gamma=config['training']['gamma'])
+
     # resume
     starting_epoch = 0
     if os.path.exists(opt.resume):
         model.load_state_dict(torch.load(opt.resume))
-        starting_epoch = int(opt.resume.split("checkpoint")[1].split("_")[
-                                 0]) + 1  # The checkpoint's file name format should be "checkpoint_EPOCH"
+        starting_epoch = int(opt.resume.split("checkpoint")[1].split("_")[0]) + 1  # The checkpoint's file name format should be "checkpoint_EPOCH"
+        print("checkpoint loaded.")
     else:
         print("No checkpoint loaded.")
-
     print("Model Parameters:", get_n_params(model))
 
     loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([class_weights]))
 
     # Create the data loaders
     train_labels = trainset[1]
+    # apply transforms
     trainset = DeepFakesDataset(trainset[0], trainset[1], config['model']['image-size'])
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=config['training']['bs'], shuffle=True, sampler=None,
                                      batch_sampler=None, num_workers=opt.workers, collate_fn=None,
@@ -123,9 +116,9 @@ if __name__ == "__main__":
     del trainset
 
     valid_labels = validset[1]
+    # apply transforms
     validset = DeepFakesDataset(validset[0], validset[1], config['model']['image-size'], mode='validation')
-    validloader = torch.utils.data.DataLoader(validset, batch_size=config['training']['bs'], shuffle=True,
-                                         sampler=None,
+    validloader = torch.utils.data.DataLoader(validset, batch_size=config['training']['bs'], shuffle=True, sampler=None,
                                          batch_sampler=None, num_workers=opt.workers, collate_fn=None,
                                          pin_memory=False, drop_last=False, timeout=0,
                                          worker_init_fn=None, prefetch_factor=2,
@@ -137,10 +130,16 @@ if __name__ == "__main__":
     counter = 0
     not_improved_loss = 0
     previous_loss = math.inf
+    print(starting_epoch)
 
     import time
     tr_loss = []
     vl_loss = []
+    tr_acc = []
+    vl_acc = []
+    vl_precision = []
+    vl_recall = []
+    vl_f1 = []
     for t in range(starting_epoch, opt.num_epochs):
         if not_improved_loss == 5:
             break
@@ -185,8 +184,7 @@ if __name__ == "__main__":
             if index % 25 == 0:  # Intermediate metrics print
                 # interm = time.time()
                 print(f"[{cur_step+1}/{25}]", "Loss: ", total_loss / counter, "Accuracy: ",
-                      train_correct / (counter * config['training']['bs']), "Train 0s: ", negative, "Train 1s:",
-                      positive)
+                      train_correct / (counter * config['training']['bs']), "Train 0s: ", negative, "Train 1s:", positive)
                 cur_step += 1
             for i in range(config['training']['bs']):
                 bar.next()
@@ -195,6 +193,7 @@ if __name__ == "__main__":
         print(f"#{t+1}/{opt.num_epochs} training time: {difference}s")
         cur_step = 0
 
+        # validation
         val_correct = 0
         val_positive = 0
         val_negative = 0
@@ -211,6 +210,7 @@ if __name__ == "__main__":
             val_pred = val_pred.cpu()
             val_loss = loss_fn(val_pred, val_labels.float())
             total_val_loss += round(val_loss.item(), 2)
+
             corrects, positive_class, negative_class, tpfptnfn = check_correct(val_pred, val_labels)
             val_correct += corrects
             val_positive += positive_class
@@ -246,11 +246,21 @@ if __name__ == "__main__":
 
         tr_loss.append(total_loss)
         vl_loss.append(total_val_loss)
+        tr_acc.append(train_correct)
+        vl_acc.append(val_correct)
+        vl_precision.append(val_precision)
+        vl_recall.append(val_recall)
+        vl_f1.append(val_f1)
 
         if not os.path.exists('./checkpoint'):
             os.makedirs('./checkpoint')
         torch.save(model.state_dict(), os.path.join('./checkpoint',
-                                                    "efficientnetB" + str(0) + "_checkpoint" + str(
+                                                    "efficientnetB" + str(opt.efficient_net) + "_checkpoint" + str(
                                                         t) + "_" + "test"))
     print(tr_loss)
     print(vl_loss)
+    print(tr_acc)
+    print(vl_acc)
+    print(vl_precision)
+    print(vl_recall)
+    print(vl_f1)

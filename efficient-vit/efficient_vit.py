@@ -112,7 +112,6 @@ class EfficientNet_(nn.Module):
             for index, param in enumerate(self.efficient_net._blocks[i].parameters()):
                 if i >= len(self.efficient_net._blocks) - 3:
                     param.requires_grad = True
-                    print("eff finetune True")
                 else:
                     param.requires_grad = False
     def model(self):
@@ -158,7 +157,8 @@ class EfficientViT(nn.Module):
                 (Eq. 1) E = (P * P * C) * D, E_pos = (N + 1) * D
             """
             patch_dim = channels * patch_size ** 2
-
+            # print("patch_dim: ", patch_dim)
+            # print("dim: ", dim)
             self.patch_size = patch_size # 7
             self.pos_embedding = nn.Parameter(torch.randn(emb_dim, 1, dim)) # ->
             self.patch_to_embedding = nn.Linear(patch_dim, dim) # -> (P * P * C) * D
@@ -177,29 +177,32 @@ class EfficientViT(nn.Module):
 
             # MLP head for classification
             self.mlp_head = nn.Sequential(
-                nn.Linear(dim, mlp_dim),
+                nn.Linear(dim, mlp_dim), #(1024, 2048)
                 nn.ReLU(),
-                nn.Linear(mlp_dim, num_classes)
+                nn.Linear(mlp_dim, num_classes) #(2048, numcls)
             )
-            print("Vision Transformer will be using.")
+            print("Vision Transformer will be attached to the efficientnet.")
 
     def forward(self, x, mask=None):
         if self.vit:
-            if self.effnet:
-                x = self.efficient_net.extract_features(x)
             p = self.patch_size
-
-            x_flat2D = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p)
-            x_proj = self.patch_to_embedding(x_flat2D)
-
+            if self.effnet:
+                x = self.efficient_net.extract_features(x) # (32, 1280, 7, 7)
+                # (32, (1 1), (7 7 1280))
+                x_flat2D = rearrange(x, 'b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=p, p2=p) # (32, 1, 7*7*1280)
+            else: # (32, 3, (1 32 7), (1 32 7))
+                one1, one2 = 1, 1
+                # (32, (1 1), (7 7 x))
+                x_flat2D = rearrange(x, 'b c (one1 h p1) (one2 w p2) -> b (one1 one2) (p1 p2 c h w)', p1=p, p2=p, one1=one1, one2=one2)
+            x_proj = self.patch_to_embedding(x_flat2D) # (batch, 1, channels * patch_size ** 2) --> (batch, dim=1024)
             cls_token = self.cls_token.expand(x.shape[0], -1, -1)
             x = torch.cat((cls_token, x_proj), 1)
             shape = x.shape[0]
             x += self.pos_embedding[0:shape]
             x = self.dropout(x)
             x = self.transformer(x)
-            x = self.to_cls_token(x[:, 0])
-            x = self.mlp_head(x)
+            x = self.to_cls_token(x[:, 0]) # pass the learnable classification token to mlp
+            x = self.mlp_head(x) #
         else:
             x = self.efficient_net(x)
         return x
