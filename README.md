@@ -30,17 +30,20 @@ pip install -r requirements.txt
 ffhq.zip / stylegan_ffhq.zip/ stylegan_celeba.zip. Consultez [On the Detection of Digital Face Manipulation](https://arxiv.org/abs/1910.01717) 
 
 ## Structure du Projet
-votre-projet/
+ViT_deepfake/
 ├── README.md
 ├── requirements.txt
-├── deepfake_detection/
-│   ├── __init__.py
-│   ├── efficientnet_model.py
-│   ├── vision_transformer_model.py
-│   ├── detection.py
-├── examples/
-│   ├── example_image.jpg
-│   ├── example_video.mp4
+├── efficient-vit/
+│   ├── configs/
+│   │   ├── configuration.yaml
+│   ├── dataset.py
+│   ├── efficient_vit.py
+│   ├── test.py
+│   ├── train.py
+│   ├── utils.py
+└── efficientnet/
+    ├── model.py
+    └── utils.py
 
 ## Modèles Utilisés
 ### EfficientNet
