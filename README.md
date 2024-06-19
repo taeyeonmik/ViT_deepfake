@@ -1,4 +1,4 @@
-# Détection de Deepfake
+# Détection de Deepfake : EfficientNet + Vision Transformer
 
 Ce projet utilise une combinaison de modèles EfficientNet et Vision Transformer pour détecter les deepfakes dans les images.
 
