@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 ## Dataset
 ### DFFD: Diverse Fake Face Dataset
-ffhq.zip / stylegan_ffhq.zip/ stylegan_celeba.zip. Consultez [On the Detection of Digital Face Manipulation](https://arxiv.org/abs/1910.01717) 
+`ffhq.zip`, `stylegan_ffhq.zip`, `stylegan_celeba.zip`. Consultez [On the Detection of Digital Face Manipulation](https://arxiv.org/abs/1910.01717) 
 
 ## Modèles Utilisés
 ### EfficientNet
