@@ -1,10 +1,3 @@
-"""model.py - Model and module class for EfficientNet.
-   They are built to mirror those in the official TensorFlow implementation.
-"""
-
-# Author: lukemelas (github username)
-# Github repo: https://github.com/lukemelas/EfficientNet-PyTorch
-# With adjustments and added comments by workingcoder (github username).
 import numpy as np
 import torch
 from torch import nn
