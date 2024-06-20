@@ -40,7 +40,14 @@ Vous pouvez consulter `presentation.pdf` dans ce repo, si vous voulez savoir des
 
 ## Résultats
 Tous les résultats sont disponible en forme de graphiques dans `train-results` et `inference`.
-### AUC
+### Validation
+|                 | Accuracy        | Precision       | Recall          | F1              |
+|-----------------|-----------------|-----------------|-----------------|-----------------|
+| EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
+| EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
+| EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
+
+### Inference (AUC)
 - EfficientNet-B0 (Baseline) = 0.880
 - EfficientNet-B0 + ViT = 0.981
 - EfficientNet-B1 + ViT = 0.984
