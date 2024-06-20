@@ -52,3 +52,6 @@ Tous les résultats sont disponible en forme de graphiques dans `train-results` 
 |-----------------|-----------------|
 | EffNetB0        | 0.880           |
 | EffNetB0 + ViT  | 0.981           |
+| EffNetB1 + ViT  | 0.984           |
+
+
