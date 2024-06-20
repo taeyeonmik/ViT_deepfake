@@ -44,8 +44,8 @@ Tous les résultats sont disponible en forme de graphiques dans `train-results` 
 |                 | Accuracy        | Precision       | Recall          | F1              |
 |-----------------|-----------------|-----------------|-----------------|-----------------|
 | EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
-| EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
-| EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
+| EffNetB0 + ViT  | 0.8854          | 0.9355          | 0.8278          | 0.8784          |
+| EffNetB1 + ViT  | 0.9040          | 0.9113          | 0.8949          | 0.9030          |
 
 ### Inference (AUC)
 - EfficientNet-B0 (Baseline) = 0.880
