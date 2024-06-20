@@ -40,7 +40,7 @@ Vous pouvez consulter `presentation.pdf` dans ce repo, si vous voulez savoir des
 
 ## Résultats
 Tous les résultats sont disponible en forme de graphiques dans `train-results` et `inference`.
-### Validation
+### Validation (À 30ème epoch)
 |                 | Accuracy        | Precision       | Recall          | F1              |
 |-----------------|-----------------|-----------------|-----------------|-----------------|
 | EffNetB0        | 0.7499          | 0.7483          | 0.7528          | 0.7505          |
