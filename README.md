@@ -48,6 +48,7 @@ Tous les résultats sont disponible en forme de graphiques dans `train-results` 
 | EffNetB1 + ViT  | 0.9040          | 0.9113          | 0.8949          | 0.9030          |
 
 ### Inference (AUC)
-- EfficientNet-B0 (Baseline) = 0.880
-- EfficientNet-B0 + ViT = 0.981
-- EfficientNet-B1 + ViT = 0.984
+|                 | AUC             |
+|-----------------|-----------------|
+| EffNetB0        | 0.880           |
+| EffNetB0 + ViT  | 0.981           |
